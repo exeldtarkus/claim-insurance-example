@@ -1,0 +1,1 @@
+ CONSUL_KV_URL=http://8.215.38.232:8500/v1/kv/web-slik-local?recurse

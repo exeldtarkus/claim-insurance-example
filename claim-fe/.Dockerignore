@@ -1,0 +1,39 @@
+# Node modules dan dependency
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build artifacts
+.next
+out
+dist
+
+# Environment files (kecuali kamu copy manual lewat Dockerfile)
+# .env
+# .env.*
+# !.env.production
+# !.env.development
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# VS Code / IDEs
+.vscode
+.idea
+
+# Prisma engine binaries (jika ada)
+**/node_modules/.prisma/client
+prisma/migrations
+
+# Logs
+*.log
+logs/

@@ -1,0 +1,73 @@
+services:
+  # --- DATABASE ---
+  db:
+    image: postgres:16-alpine
+    container_name: claim-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-claims_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-claims_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # --- MIGRATION ---
+  migration:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: claim-migration
+    env_file:
+      - ./backend/.env.docker
+    # Menggunakan loop shell yang memanggil perintah Python singkat
+    command: >
+      sh -c "until python -c 'import socket; s = socket.socket(); s.connect((\"db\", 5432))' 2>/dev/null; 
+             do echo 'Menunggu database (db:5432)...'; sleep 1; done; 
+             echo 'Database siap! Menjalankan migrasi...';
+             alembic upgrade head"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  # --- BACKEND ---
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: claim-backend
+    env_file:
+      - ./backend/.env.docker
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # --- FRONTEND ---
+  frontend:
+    build:
+      context: ./claim-fe
+      dockerfile: Dockerfile
+    container_name: claim-frontend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./claim-fe/.env
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - SERVICES_HOST=http://backend:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
