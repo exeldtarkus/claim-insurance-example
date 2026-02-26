@@ -2,13 +2,11 @@
 backend/venv/
 backend/__pycache__/
 backend/*.pyc
-backend/.env*
 
 # Node.js
 claim-fe/node_modules/
 claim-fe/.next/
 claim-fe/out/
-claim-fe/.env*
 
 # Docker & OS
 .DS_Store
